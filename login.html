@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login — Free Food Donation System</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="auth-body">
+  <div class="auth-card">
+    <div class="auth-brand">
+      <span class="logo-icon">🤝</span>
+      <h1>Free Donation System</h1>
+      <p>Welcome back. Log in to view all donations &amp; requests.</p>
+    </div>
+
+    <div class="auth-tabs">
+      <button type="button" class="auth-tab active" data-tab="login">Login</button>
+      <button type="button" class="auth-tab" data-tab="signup">Sign Up</button>
+    </div>
+
+    <!-- Login form -->
+    <form id="loginForm" class="auth-form" onsubmit="return handleLogin(event)">
+      <label>Email
+        <input type="email" name="email" required placeholder="you@example.com" />
+      </label>
+      <label>Password
+        <input type="password" name="password" required placeholder="Your password" />
+      </label>
+      <button type="submit" class="btn btn-primary btn-block">Login</button>
+      <p id="loginMsg" class="form-note error"></p>
+    </form>
+
+    <!-- Sign up form -->
+    <form id="signupForm" class="auth-form hidden" onsubmit="return handleSignup(event)">
+      <label>Full Name
+        <input type="text" name="name" required placeholder="Your name" />
+      </label>
+      <label>Email
+        <input type="email" name="email" required placeholder="you@example.com" />
+      </label>
+      <label>Password
+        <input type="password" name="password" required placeholder="Create a password" />
+      </label>
+      <label>I am a...
+        <select name="role">
+          <option value="Donor">Donor</option>
+          <option value="Receiver">Receiver</option>
+          <option value="Admin">Admin</option>
+        </select>
+      </label>
+      <button type="submit" class="btn btn-primary btn-block">Create Account</button>
+      <p id="signupMsg" class="form-note error"></p>
+    </form>
+
+    <p class="auth-foot"><a href="index.html">← Back to site</a></p>
+  </div>
+
+  <script>
+    (function () {
+      "use strict";
+      var USERS_KEY = "ffds_users";
+      var SESSION_KEY = "ffds_session";
+
+      function getUsers() {
+        try { return JSON.parse(localStorage.getItem(USERS_KEY)) || []; }
+        catch (e) { return []; }
+      }
+      function setUsers(arr) { localStorage.setItem(USERS_KEY, JSON.stringify(arr)); }
+
+      // Tab switching
+      var tabs = document.querySelectorAll(".auth-tab");
+      var loginForm = document.getElementById("loginForm");
+      var signupForm = document.getElementById("signupForm");
+      Array.prototype.forEach.call(tabs, function (t) {
+        t.addEventListener("click", function () {
+          Array.prototype.forEach.call(tabs, function (x) { x.classList.remove("active"); });
+          t.classList.add("active");
+          if (t.getAttribute("data-tab") === "login") {
+            loginForm.classList.remove("hidden");
+            signupForm.classList.add("hidden");
+          } else {
+            signupForm.classList.remove("hidden");
+            loginForm.classList.add("hidden");
+          }
+        });
+      });
+
+      window.handleLogin = function (e) {
+        e.preventDefault();
+        var f = e.target;
+        var email = f.email.value.trim().toLowerCase();
+        var pwd = f.password.value;
+        var msg = document.getElementById("loginMsg");
+        var user = getUsers().filter(function (u) {
+          return u.email.toLowerCase() === email && u.password === pwd;
+        })[0];
+        if (!user) {
+          msg.textContent = "Invalid email or password. Please sign up first.";
+          return false;
+        }
+        localStorage.setItem(SESSION_KEY, JSON.stringify({
+          name: user.name, email: user.email, role: user.role
+        }));
+        msg.textContent = "";
+        window.location.href = "index.html";
+        return false;
+      };
+
+      window.handleSignup = function (e) {
+        e.preventDefault();
+        var f = e.target;
+        var name = f.name.value.trim();
+        var email = f.email.value.trim().toLowerCase();
+        var pwd = f.password.value;
+        var role = f.role.value;
+        var msg = document.getElementById("signupMsg");
+        if (pwd.length < 4) {
+          msg.textContent = "Password must be at least 4 characters.";
+          return false;
+        }
+        var users = getUsers();
+        if (users.some(function (u) { return u.email.toLowerCase() === email; })) {
+          msg.textContent = "An account with this email already exists. Please login.";
+          return false;
+        }
+        users.push({ name: name, email: email, password: pwd, role: role, createdAt: Date.now() });
+        setUsers(users);
+        localStorage.setItem(SESSION_KEY, JSON.stringify({ name: name, email: email, role: role }));
+        msg.textContent = "";
+        window.location.href = "index.html";
+        return false;
+      };
+    })();
+  </script>
+</body>
+</html>
